@@ -1,6 +1,13 @@
-import { Client } from "discord.js";
+import { Client, Message } from "discord.js";
+import { Parameters } from "./parameters";
+import { Signature } from "./signature";
 
-export interface Command {}
+export interface Command<T = any> {
+  name: string;
+
+  signature: Signature<T>;
+  execute: (context: Message, args: T) => unknown | Promise<unknown>;
+}
 
 export interface OkOptions {
   prefix?: Array<string> | string;
@@ -20,7 +27,20 @@ export class Ok {
     }
     this.prefixes.sort((a, b) => b.length - a.length);
   }
-  add(options: Command) {
+  add<T>(options: Command<T>) {
     this.commands.push(options);
   }
 }
+
+new Ok(Client.prototype, {}).add({
+  name: "test",
+  signature: {
+    member: {
+      name: "member",
+      type: Parameters.member,
+    },
+  },
+  execute(context, args) {
+    return args.member;
+  },
+});
