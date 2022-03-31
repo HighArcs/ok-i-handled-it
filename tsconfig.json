@@ -2,7 +2,7 @@
   "compilerOptions": {
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "incremental": true,
+    // "incremental": true,
     "target": "esnext",
     "module": "commonjs",
     "outDir": "./dist",

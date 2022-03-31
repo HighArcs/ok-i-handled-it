@@ -1,12 +1,12 @@
 import { Client, Message } from "discord.js";
-import { Parameters } from "./parameters";
-import { Signature } from "./signature";
+import { parseSignature, Signature } from "./signature";
+import { Awaitable } from "./tools/types";
 
 export interface Command<T = any> {
   name: string;
-
   signature: Signature<T>;
-  execute: (context: Message, args: T) => unknown | Promise<unknown>;
+  execute: (context: Message, args: T) => Awaitable<any>;
+  onError?: (context: Message, error: Error) => Awaitable<any>;
 }
 
 export interface OkOptions {
@@ -30,17 +30,19 @@ export class Ok {
   add<T>(options: Command<T>) {
     this.commands.push(options);
   }
+  async exec(context: Message) {
+    const args = context.content.split(" ");
+    const prefix = args.shift() || "";
+    const command = args.shift();
+    if (this.prefixes.includes(prefix)) {
+      const commandObj = this.commands.find(
+        (c) => c.name === command
+      ) as Command;
+      if (commandObj) {
+        const signature = commandObj.signature;
+        const result = await parseSignature(context, args, signature);
+        return commandObj.execute(context, result);
+      }
+    }
+  }
 }
-
-new Ok(Client.prototype, {}).add({
-  name: "test",
-  signature: {
-    member: {
-      name: "member",
-      type: Parameters.member,
-    },
-  },
-  execute(context, args) {
-    return args.member;
-  },
-});
