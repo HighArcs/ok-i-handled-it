@@ -1,5 +1,5 @@
 const { Client } = require("discord.js");
-const { Ok, Parameters } = require("../../");
+const { Ok, Parameters } = require("ok-i-handled-it");
 
 let token = ""; // please dont hardcode your token lol
 

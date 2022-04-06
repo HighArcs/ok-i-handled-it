@@ -69,7 +69,7 @@ export async function parseSignature<T>(
         try {
           result[key] = parameter.type(value, context);
         } catch (error) {
-          errors[name] = error;
+          errors[name] = error as TypeError;
         }
       } else {
         result[name] = value;

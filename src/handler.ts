@@ -92,7 +92,7 @@ export class Ok {
     this.directories.set(directory, options);
 
     const files = await getFiles(directory, options.subdirectories);
-    const errors: Record<string, Error> = {};
+    const errors: Record<string, any> = {};
 
     const add = (imported: any, path: string) => {
       if (!imported) {
@@ -245,7 +245,7 @@ export class Ok {
       output = await command.execute(context, signature.output, command);
     } catch (error) {
       if (command.onError) {
-        await command.onError(context, error, command);
+        await command.onError(context, error as Error, command);
       }
       return;
     }
