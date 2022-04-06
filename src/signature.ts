@@ -18,12 +18,21 @@ export type Signature<T> = {
   [K in keyof T]: Parameter<T[K]>;
 };
 
+export interface SignatureResult<T> {
+  signature: Signature<T>;
+  raw: Array<string>;
+  context: Message;
+  output: T;
+  errors: Record<string, Error>;
+}
+
 export async function parseSignature<T>(
   context: Message,
   args: Array<string>,
   signature: Signature<T>
-): Promise<T> {
+): Promise<SignatureResult<T>> {
   const result: any = {};
+  const errors: Record<string, TypeError> = {};
 
   const entries: Array<[string, Parameter<any>]> = Object.entries(signature);
   for (const [key, parameter] of entries) {
@@ -36,14 +45,14 @@ export async function parseSignature<T>(
         break check;
       }
       if (parameter.required === true) {
-        throw new Error(`Missing required parameter '${name}'`);
+        errors[name] = new TypeError(`Missing required parameter '${name}'`);
       }
     }
     if (value !== undefined) {
       if (parameter.choices) {
         const choices = [...(await resolve<Arrayable<any>>(parameter.choices))];
         if (!choices.includes(value)) {
-          throw new Error(
+          errors[name] = new TypeError(
             `Invalid value for parameter ${name}: ${value} (must be one of [ ${parameter.choices.join(
               ", "
             )} ])`
@@ -51,12 +60,22 @@ export async function parseSignature<T>(
         }
       }
       if (parameter.type) {
-        result[name] = await parameter.type(value, context);
+        try {
+          result[key] = parameter.type(value, context);
+        } catch (error) {
+          errors[name] = error;
+        }
       } else {
         result[name] = value;
       }
     }
   }
 
-  return result;
+  return {
+    context,
+    output: result,
+    signature,
+    raw: args,
+    errors,
+  };
 }
