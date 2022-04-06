@@ -3,7 +3,7 @@ import { Arrayable, Awaitable, Resolvable, resolve } from "./tools/types";
 
 export type ParameterType<T> = (
   value: string,
-  context?: Message
+  context: Message
 ) => Awaitable<T>;
 
 export interface Parameter<T> {
@@ -15,7 +15,7 @@ export interface Parameter<T> {
 }
 
 export type Signature<T> = {
-  [K in keyof T]: Parameter<T[K]>;
+  [K in keyof T]: Parameter<T[K]> | ParameterType<T[K]>;
 };
 
 export interface SignatureResult<T> {
@@ -34,8 +34,14 @@ export async function parseSignature<T>(
   const result: any = {};
   const errors: Record<string, TypeError> = {};
 
-  const entries: Array<[string, Parameter<any>]> = Object.entries(signature);
-  for (const [key, parameter] of entries) {
+  const entries: Array<[string, Parameter<any> | ParameterType<any>]> =
+    Object.entries(signature);
+  for (let [key, parameter] of entries) {
+    if (parameter instanceof Function) {
+      parameter = {
+        type: parameter,
+      };
+    }
     let name = parameter.name || key;
     const value = args.shift();
     check: if (value === undefined) {
