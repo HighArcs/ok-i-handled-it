@@ -29,6 +29,7 @@ export interface OkOptions {
   events?: OkEvents;
   editResponse?: boolean;
   deleteResponse?: boolean;
+  startup?: boolean;
 }
 
 export interface DirectoryOptions {

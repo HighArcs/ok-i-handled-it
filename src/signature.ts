@@ -1,10 +1,13 @@
 import { Message } from "discord.js";
+import { Builtin, Parameters } from "./parameters";
 import { Arrayable, Awaitable, Resolvable, resolve } from "./tools/types";
 
 export type ParameterType<T> = (
   value: string,
   context: Message
 ) => Awaitable<T>;
+// | Builtin;
+// | keyof typeof Builtin;
 
 export interface Parameter<T> {
   name?: string;
@@ -15,7 +18,7 @@ export interface Parameter<T> {
 }
 
 export type Signature<T> = {
-  [K in keyof T]: Parameter<T[K]> | ParameterType<T[K]>;
+  [K in keyof T]: Parameter<T[K]> | ParameterType<T[K]> | Builtin;
 };
 
 export interface SignatureResult<T> {
@@ -37,6 +40,9 @@ export async function parseSignature<T>(
   const entries: Array<[string, Parameter<any> | ParameterType<any>]> =
     Object.entries(signature);
   for (let [key, parameter] of entries) {
+    if (typeof parameter === "string") {
+      parameter = { type: Parameters[parameter] };
+    }
     if (parameter instanceof Function) {
       parameter = {
         type: parameter,

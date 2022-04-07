@@ -46,3 +46,8 @@ export async function getFiles(
     return names;
   }
 }
+export function fuzzyMatch(source: string, target: string) {
+  source = ".*" + source.split("").join(".*") + ".*";
+  const re = new RegExp(source, "i");
+  return re.test(target);
+}

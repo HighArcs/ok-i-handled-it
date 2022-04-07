@@ -8,7 +8,7 @@ const client = new Client({
   ws: { properties: { $browser: "iOS" } }, // lol
 });
 
-const ok = new Ok(client, {
+export const ok = new Ok(client, {
   events: {},
   filter: {
     ignoreDMs: true,
