@@ -1,19 +1,19 @@
 import { Message } from "discord.js";
-import { Arrayable, Awaitable, Resolvable, resolve } from "./tools/types";
+import { Awaitable, Resolvable, resolve } from "./tools/types";
 
 export type ParameterType<T> = (
   value: string,
   context: Message
 ) => Awaitable<T>;
-// | Builtin;
-// | keyof typeof Builtin;
+
+export type ParameterDefault<T> = (context: Message) => Awaitable<T>;
 
 export interface Parameter<T> {
   name?: string;
   type: ParameterType<T>;
   required?: boolean;
-  default?: Resolvable<T | ParameterType<T>>;
-  choices?: Resolvable<Arrayable<T>>;
+  default?: ParameterDefault<string> | string;
+  choices?: Resolvable<Array<T>>;
 }
 
 export type Signature<T> = {
@@ -25,7 +25,7 @@ export interface SignatureResult<T> {
   raw: Array<string>;
   context: Message;
   output: T;
-  errors: Record<string, Error>;
+  errors: Record<string, TypeError>;
 }
 
 export async function parseSignature<T>(
@@ -45,36 +45,40 @@ export async function parseSignature<T>(
       };
     }
     let name = parameter.name || key;
-    const value = args.shift();
-    check: if (value === undefined) {
-      if (parameter.default) {
-        const def = await resolve(parameter.default);
-        result[key] = def;
-        break check;
-      }
-      if (parameter.required === true) {
-        errors[name] = new TypeError(`Missing required parameter '${name}'`);
+    let value = args.shift();
+    if (parameter.default) {
+      if (parameter.default instanceof Function) {
+        value = value || (await parameter.default(context));
+      } else {
+        value = value || parameter.default;
       }
     }
-    if (value !== undefined) {
-      if (parameter.choices) {
-        const choices = [...(await resolve<Arrayable<any>>(parameter.choices))];
-        if (!choices.includes(value)) {
-          errors[name] = new TypeError(
-            `Invalid value for parameter ${name}: ${value} (must be one of [ ${parameter.choices.join(
-              ", "
-            )} ])`
-          );
-        }
+
+    if (parameter.required !== false && value === undefined) {
+      errors[key] = new TypeError(`Missing required parameter '${name}'`);
+      continue;
+    }
+
+    if (parameter.type) {
+      try {
+        result[key] = await parameter.type(value!, context);
+      } catch (error) {
+        errors[key] = error as TypeError;
+        continue;
       }
-      if (parameter.type) {
-        try {
-          result[key] = parameter.type(value, context);
-        } catch (error) {
-          errors[name] = error as TypeError;
+    } else {
+      result[key] = value;
+
+      if (parameter.choices) {
+        const choices = await resolve(parameter.choices);
+        if (!choices.includes(result[key])) {
+          errors[key] = new TypeError(
+            `Invalid value for "${name}": ${value} (must be one of [${choices.join(
+              ", "
+            )}])`
+          );
+          continue;
         }
-      } else {
-        result[name] = value;
       }
     }
   }

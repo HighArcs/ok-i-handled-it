@@ -13,34 +13,36 @@ async function parseSignature(context, args, signature) {
             };
         }
         let name = parameter.name || key;
-        const value = args.shift();
-        check: if (value === undefined) {
-            if (parameter.default) {
-                const def = await (0, types_1.resolve)(parameter.default);
-                result[key] = def;
-                break check;
-            }
-            if (parameter.required === true) {
-                errors[name] = new TypeError(`Missing required parameter '${name}'`);
-            }
-        }
-        if (value !== undefined) {
-            if (parameter.choices) {
-                const choices = [...(await (0, types_1.resolve)(parameter.choices))];
-                if (!choices.includes(value)) {
-                    errors[name] = new TypeError(`Invalid value for parameter ${name}: ${value} (must be one of [ ${parameter.choices.join(", ")} ])`);
-                }
-            }
-            if (parameter.type) {
-                try {
-                    result[key] = parameter.type(value, context);
-                }
-                catch (error) {
-                    errors[name] = error;
-                }
+        let value = args.shift();
+        if (parameter.default) {
+            if (parameter.default instanceof Function) {
+                value = value || (await parameter.default(context));
             }
             else {
-                result[name] = value;
+                value = value || parameter.default;
+            }
+        }
+        if (parameter.required !== false && value === undefined) {
+            errors[key] = new TypeError(`Missing required parameter '${name}'`);
+            continue;
+        }
+        if (parameter.type) {
+            try {
+                result[key] = await parameter.type(value, context);
+            }
+            catch (error) {
+                errors[key] = error;
+                continue;
+            }
+        }
+        else {
+            result[key] = value;
+            if (parameter.choices) {
+                const choices = await (0, types_1.resolve)(parameter.choices);
+                if (!choices.includes(result[key])) {
+                    errors[key] = new TypeError(`Invalid value for "${name}": ${value} (must be one of [${choices.join(", ")}])`);
+                    continue;
+                }
             }
         }
     }

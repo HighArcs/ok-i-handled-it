@@ -1,22 +1,14 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Ok = void 0;
 const discord_js_1 = require("discord.js");
-const path_1 = __importDefault(require("path"));
 const signature_1 = require("./signature");
-const util_1 = require("./tools/util");
 class Ok {
-    client;
     prefixes = [];
     commands = [];
     replies = new Map();
     options;
-    directories = new Map();
-    constructor(client, options) {
-        this.client = client;
+    constructor(options) {
         this.options = Object.assign({
             prefix: [],
             filter: {},
@@ -41,97 +33,49 @@ class Ok {
         this.commands.push(options);
         return this;
     }
-    addMultiple(commands = []) {
+    addMultiple(...commands) {
         for (let command of commands) {
             this.add(command);
         }
         return this;
     }
-    async addMultipleIn(directory, options) {
-        options = Object.assign({ subdirectories: true }, options);
-        if (!options.absolute) {
-            if (require.main) {
-                directory = path_1.default.join(path_1.default.dirname(require.main.filename), directory);
-            }
-        }
-        this.directories.set(directory, options);
-        const files = await (0, util_1.getFiles)(directory, options.subdirectories);
-        const errors = {};
-        const add = (imported, path) => {
-            if (!imported) {
-                return;
-            }
-            if (Array.isArray(imported)) {
-                for (let child of imported) {
-                    add(child, path);
-                }
-            }
-            else {
-                this.add(imported);
-            }
-        };
-        for (let file of files) {
-            if (![".js", ".ts"].includes(path_1.default.extname(file))) {
-                continue;
-            }
-            const filepath = path_1.default.resolve(directory, file);
-            try {
-                let imported = require(filepath);
-                if (typeof imported === "object" && imported.__esModule) {
-                    imported = imported.default;
-                }
-                add(imported, filepath);
-            }
-            catch (error) {
-                errors[filepath] = error;
-            }
-        }
-        if (Object.keys(errors).length > 0) {
-            throw new Error(`Failed to load ${Object.keys(errors).length} files:\n${Object.keys(errors)
-                .map((file) => `\`${file}\`: ${errors[file].message}`)
-                .join("\n")}`);
-        }
-        return this;
-    }
     async exec(context) {
-        if (this.options.events.onMessageCheck) {
-            const result = await this.options.events.onMessageCheck(context);
-            if (!result) {
-                if (this.options.events.onMessageCheckCancel) {
-                    await this.options.events.onMessageCheckCancel(context);
+        if (this.options.events) {
+            if (this.options.events.onMessageCheck) {
+                const result = await this.options.events.onMessageCheck(context);
+                if (!result) {
+                    if (this.options.events.onMessageCheckCancel) {
+                        await this.options.events.onMessageCheckCancel(context);
+                    }
+                    return;
                 }
-                return;
             }
         }
-        if (this.options.filter.ignoreBots) {
-            if (context.author.bot) {
-                if (this.options.filter.onBotCancel) {
-                    await this.options.filter.onBotCancel(context);
+        if (this.options.filter) {
+            if (this.options.filter.ignoreBots) {
+                if (context.author.bot) {
+                    if (this.options.filter.onBotCancel) {
+                        await this.options.filter.onBotCancel(context);
+                    }
+                    return;
                 }
-                return;
             }
-        }
-        if (this.options.filter.ignoreSelf) {
-            if (context.author.id === this.client.user.id) {
-                if (this.options.filter.onSelfCancel) {
-                    await this.options.filter.onSelfCancel(context);
+            if (this.options.filter.ignoreSelf) {
+                if (context.author.id === context.client.user.id) {
+                    if (this.options.filter.onSelfCancel) {
+                        await this.options.filter.onSelfCancel(context);
+                    }
+                    return;
                 }
-                return;
-            }
-        }
-        if (this.options.filter.ignoreDMs) {
-            if (context.channel.type === "DM") {
-                if (this.options.filter.onDMCancel) {
-                    await this.options.filter.onDMCancel(context);
-                }
-                return;
             }
         }
         let prefixes = this.prefixes;
         if (this.options.events && this.options.events.onPrefixCheck) {
             prefixes = await this.options.events.onPrefixCheck(context, prefixes);
         }
-        const prefixRegex = new RegExp(`^(${prefixes.join("|")})(.*)$`);
+        const prefixRegex = new RegExp(`^(?:${prefixes
+            .map((v) => v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+            .join("|")})`);
         const match = context.content.match(prefixRegex);
         if (!match || !match.length) {
             return;
@@ -143,13 +87,15 @@ class Ok {
         if (!command) {
             return;
         }
-        if (this.options.events.onCommandCheck) {
-            const result = await this.options.events.onCommandCheck(context, command);
-            if (!result) {
-                if (this.options.events.onCommandCheckCancel) {
-                    await this.options.events.onCommandCheckCancel(context, command);
+        if (this.options.events) {
+            if (this.options.events.onCommandCheck) {
+                const result = await this.options.events.onCommandCheck(context, command);
+                if (!result) {
+                    if (this.options.events.onCommandCheckCancel) {
+                        await this.options.events.onCommandCheckCancel(context, command);
+                    }
+                    return;
                 }
-                return;
             }
         }
         if (command.onBefore) {
@@ -167,13 +113,40 @@ class Ok {
         const signature = await (0, signature_1.parseSignature)(context, args, command.signature || {});
         if (command.filter) {
             if (command.filter.nsfw) {
-                if (context.channel instanceof discord_js_1.BaseGuildTextChannel) {
-                    if (!context.channel.nsfw) {
+                const channel = context.channel;
+                if (channel instanceof discord_js_1.BaseGuildTextChannel) {
+                    if (!channel.nsfw) {
                         if (command.filter.onNsfwCancel) {
                             await command.filter.onNsfwCancel(context, signature);
                         }
                         return;
                     }
+                }
+            }
+            if (command.filter.permissions) {
+                if (context.member) {
+                    const passed = command.filter.permissions.filter((value) => {
+                        return !context.member?.permissions.has(value);
+                    });
+                    if (passed.length) {
+                        if (command.filter.onPermissionsCancel) {
+                            command.filter.onPermissionsCancel(context, args, passed);
+                        }
+                        return;
+                    }
+                }
+            }
+            if (command.filter.clientPermissions) {
+                const guild = context.guild;
+                const self = guild.me;
+                const passed = command.filter.clientPermissions.filter((value) => {
+                    return !self?.permissions.has(value);
+                });
+                if (passed.length) {
+                    if (command.filter.onClientPermissionsCancel) {
+                        command.filter.onClientPermissionsCancel(context, args, passed);
+                    }
+                    return;
                 }
             }
         }
@@ -201,31 +174,6 @@ class Ok {
             this.replies.set(context.id, output);
         }
         return output;
-    }
-    async attach() {
-        this.client.on("messageCreate", async (message) => {
-            return this.exec(message);
-        });
-        this.client.on("messageUpdate", async (oldMessage, newMessage) => {
-            if (this.options.editResponse) {
-                if (newMessage instanceof discord_js_1.Message) {
-                    return this.exec(newMessage);
-                }
-            }
-        });
-        this.client.on("messageDelete", async (message) => {
-            if (this.options.deleteResponse) {
-                if (message instanceof discord_js_1.Message) {
-                    if (this.replies.has(message.id)) {
-                        this.replies.delete(message.id);
-                    }
-                }
-            }
-        });
-    }
-    async run(token) {
-        await this.attach();
-        await this.client.login(token);
     }
 }
 exports.Ok = Ok;

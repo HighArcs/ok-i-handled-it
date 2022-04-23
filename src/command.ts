@@ -1,8 +1,7 @@
-import { Message, PermissionResolvable } from "discord.js";
+import { Message, Permissions } from "discord.js";
 import { OkFilter } from "./handler";
 import { Signature } from "./signature";
 import { Awaitable } from "./tools/types";
-
 export interface CommandMetadata<T> {
   description?: string;
   usage?: string;
@@ -13,17 +12,17 @@ export interface CommandMetadata<T> {
 }
 
 export interface CommandFilter<T> extends OkFilter {
-  permissions?: Array<PermissionResolvable>;
+  permissions?: Array<Permissions>;
   onPermissionsCancel?: (
     message: Message,
     args: T,
-    permissions: Permissions
+    permissions: Array<Permissions>
   ) => Awaitable<any>;
-  clientPermissions?: Array<PermissionResolvable>;
+  clientPermissions?: Array<Permissions>;
   onClientPermissionsCancel?: (
     message: Message,
     args: T,
-    permissions: Permissions
+    permissions: Array<Permissions>
   ) => Awaitable<any>;
   nsfw?: boolean;
   onNsfwCancel?: (message: Message, args: T) => Awaitable<any>;
@@ -43,7 +42,7 @@ export interface Command<T = any> {
     command: Command<T>
   ) => Awaitable<any>;
   onBefore?: (context: Message, command: Command<T>) => Awaitable<boolean>;
-  onCancel?: (context: Message, command: Command<T>) => Awaitable<boolean>;
+  onCancel?: (context: Message, command: Command<T>) => Awaitable<any>;
   onBeforeRun?: (
     context: Message,
     args: T,

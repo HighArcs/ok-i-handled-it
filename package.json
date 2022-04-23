@@ -16,5 +16,9 @@
   "bugs": {
     "url": "https://github.com/HighArcs/ok-i-handled-it/issues"
   },
-  "homepage": "https://github.com/HighArcs/ok-i-handled-it#readme"
+  "homepage": "https://github.com/HighArcs/ok-i-handled-it#readme",
+  "dependencies": {
+    "@types/node": "^17.0.25",
+    "discord.js": "^13.6.0"
+  }
 }

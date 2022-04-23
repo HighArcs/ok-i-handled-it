@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getFiles = void 0;
+exports.fuzzyMatch = exports.getFiles = void 0;
 const node_fs_1 = require("node:fs");
 async function getFiles(directory, subdirectories) {
     if (subdirectories) {
@@ -41,3 +41,9 @@ async function getFiles(directory, subdirectories) {
     }
 }
 exports.getFiles = getFiles;
+function fuzzyMatch(source, target) {
+    source = ".*" + source.split("").join(".*") + ".*";
+    const re = new RegExp(source, "i");
+    return re.test(target);
+}
+exports.fuzzyMatch = fuzzyMatch;

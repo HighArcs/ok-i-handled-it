@@ -627,7 +627,7 @@ class MatchInner {
   ): DiscordRegexPayload<T> {
     const regex = DiscordRegex[type];
     if (regex === undefined) {
-      throw new global.Error(`Unknown regex type: ${type}`);
+      throw new Error(`Unknown regex type: ${type}`);
     }
     regex.lastIndex = 0;
 
@@ -691,7 +691,7 @@ class MatchInner {
           }
           break;
         default: {
-          throw new global.Error(`Unknown regex type: ${type}`);
+          throw new Error(`Unknown regex type: ${type}`);
         }
       }
       payload.matches.push(result as T);
