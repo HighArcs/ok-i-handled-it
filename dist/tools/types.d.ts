@@ -18,3 +18,6 @@ export declare type Intersection<X, Y> = X & Y;
 export declare type Union<X, Y> = X | Y;
 export declare type Resolvable<X> = Functional<Awaitable<X>>;
 export declare function resolve<T>(value: Resolvable<T>, ...args: any[]): Promise<T>;
+export declare type ParseType<T> = {
+    [K in keyof T]: T[K] extends unknown ? [k: K, args: T[K]] : never;
+}[keyof T];

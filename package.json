@@ -1,6 +1,6 @@
 {
   "name": "ok-i-handled-it",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -19,6 +19,6 @@
   "homepage": "https://github.com/HighArcs/ok-i-handled-it#readme",
   "dependencies": {
     "@types/node": "^17.0.25",
-    "discord.js": "^13.6.0"
+    "discord.js": "^14.0.0-dev.1650672498-3617093"
   }
 }

@@ -40,3 +40,7 @@ export async function resolve<T>(
   }
   return await value;
 }
+// robbing sern lol
+export type ParseType<T> = {
+  [K in keyof T]: T[K] extends unknown ? [k: K, args: T[K]] : never;
+}[keyof T];

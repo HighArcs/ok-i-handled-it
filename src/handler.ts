@@ -1,7 +1,12 @@
-import { BaseGuildTextChannel, Message } from "discord.js";
+import {
+  BaseGuildTextChannel,
+  Client,
+  ClientEvents,
+  Message,
+} from "discord.js";
 import { Command } from "./command";
 import { parseSignature } from "./signature";
-import { Awaitable } from "./tools/types";
+import { Awaitable, ParseType } from "./tools/types";
 export interface OkFilter {
   ignoreBots?: boolean;
   onBotCancel?: (message: Message) => Awaitable<void>;
@@ -17,8 +22,10 @@ export interface OkEvents {
   onCommandCheckCancel?: (context: Message, command: Command) => Awaitable<any>;
   onMessageCheck?: (context: Message) => Awaitable<boolean>;
   onMessageCheckCancel?: (context: Message) => Awaitable<any>;
+  other?: Array<
+    ParseType<{ [K in keyof ClientEvents]: (...args: ClientEvents[K]) => any }>
+  >;
 }
-
 export interface OkOptions {
   prefix?: Iterable<string> | string;
   filter?: OkFilter;
@@ -227,5 +234,35 @@ export class Ok {
     }
 
     return output;
+  }
+
+  attach(client: Client) {
+    client.on("messageCreate", this.exec.bind(this));
+    if (this.options.editResponse) {
+      client.on("messageUpdate", async (_unused_old, payload) => {
+        if (payload instanceof Message) {
+          return this.exec(payload);
+        }
+      });
+    }
+    if (this.options.deleteResponse) {
+      client.on("messageDelete", async (old) => {
+        if (this.replies.has(old.id)) {
+          const payload = this.replies.get(old.id);
+          if (payload) {
+            await payload.delete();
+          }
+        }
+      });
+    }
+
+    if (this.options.events) {
+      if (this.options.events.other) {
+        for (let [name, callee] of this.options.events.other) {
+          // @ts-ignore: TS2339
+          client.on(name, callee);
+        }
+      }
+    }
   }
 }

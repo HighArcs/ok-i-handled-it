@@ -175,5 +175,32 @@ class Ok {
         }
         return output;
     }
+    attach(client) {
+        client.on("messageCreate", this.exec.bind(this));
+        if (this.options.editResponse) {
+            client.on("messageUpdate", async (_unused_old, payload) => {
+                if (payload instanceof discord_js_1.Message) {
+                    return this.exec(payload);
+                }
+            });
+        }
+        if (this.options.deleteResponse) {
+            client.on("messageDelete", async (old) => {
+                if (this.replies.has(old.id)) {
+                    const payload = this.replies.get(old.id);
+                    if (payload) {
+                        await payload.delete();
+                    }
+                }
+            });
+        }
+        if (this.options.events) {
+            if (this.options.events.other) {
+                for (let [name, callee] of this.options.events.other) {
+                    client.on(name, callee);
+                }
+            }
+        }
+    }
 }
 exports.Ok = Ok;

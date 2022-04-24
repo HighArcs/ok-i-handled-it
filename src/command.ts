@@ -1,4 +1,4 @@
-import { Message, Permissions } from "discord.js";
+import { Message, PermissionsBitField } from "discord.js";
 import { OkFilter } from "./handler";
 import { Signature } from "./signature";
 import { Awaitable } from "./tools/types";
@@ -12,17 +12,17 @@ export interface CommandMetadata<T> {
 }
 
 export interface CommandFilter<T> extends OkFilter {
-  permissions?: Array<Permissions>;
+  permissions?: Array<PermissionsBitField>;
   onPermissionsCancel?: (
     message: Message,
     args: T,
-    permissions: Array<Permissions>
+    permissions: Array<PermissionsBitField>
   ) => Awaitable<any>;
-  clientPermissions?: Array<Permissions>;
+  clientPermissions?: Array<PermissionsBitField>;
   onClientPermissionsCancel?: (
     message: Message,
     args: T,
-    permissions: Array<Permissions>
+    permissions: Array<PermissionsBitField>
   ) => Awaitable<any>;
   nsfw?: boolean;
   onNsfwCancel?: (message: Message, args: T) => Awaitable<any>;
