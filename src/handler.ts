@@ -4,9 +4,11 @@ import {
   ClientEvents,
   Message,
 } from "discord.js";
+import path from "node:path";
 import { Command } from "./command";
 import { parseSignature } from "./signature";
 import { Awaitable, ParseType } from "./tools/types";
+import { getFiles } from "./tools/util";
 export interface OkFilter {
   ignoreBots?: boolean;
   onBotCancel?: (message: Message) => Awaitable<void>;
@@ -34,12 +36,16 @@ export interface OkOptions {
   deleteResponse?: boolean;
   startup?: boolean;
 }
-
+export interface DirectoryOptions {
+  subdirectories?: boolean;
+  absolute?: boolean;
+}
 export class Ok {
   protected prefixes: Array<string> = [];
   public commands: Array<Command> = [];
   public replies: Map<string, Message> = new Map();
   public options: Required<OkOptions>;
+  protected directories: Map<string, DirectoryOptions> = new Map();
   constructor(options: OkOptions) {
     this.options = Object.assign(
       {
@@ -112,7 +118,9 @@ export class Ok {
         }
         add(imported, filepath);
       } catch (error) {
-        errors[filepath] = error;
+        if (error instanceof Error) {
+          errors[filepath] = error;
+        }
       }
     }
 

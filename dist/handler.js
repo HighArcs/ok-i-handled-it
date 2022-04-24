@@ -1,13 +1,19 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Ok = void 0;
 const discord_js_1 = require("discord.js");
+const node_path_1 = __importDefault(require("node:path"));
 const signature_1 = require("./signature");
+const util_1 = require("./tools/util");
 class Ok {
     prefixes = [];
     commands = [];
     replies = new Map();
     options;
+    directories = new Map();
     constructor(options) {
         this.options = Object.assign({
             prefix: [],
@@ -36,6 +42,54 @@ class Ok {
     addMultiple(...commands) {
         for (let command of commands) {
             this.add(command);
+        }
+        return this;
+    }
+    async addMultipleIn(directory, options) {
+        options = Object.assign({ subdirectories: true }, options);
+        if (!options.absolute) {
+            if (require.main) {
+                directory = node_path_1.default.join(node_path_1.default.dirname(require.main.filename), directory);
+            }
+        }
+        this.directories.set(directory, options);
+        const files = await (0, util_1.getFiles)(directory, options.subdirectories);
+        const errors = {};
+        const add = (imported, path) => {
+            if (!imported) {
+                return;
+            }
+            if (Array.isArray(imported)) {
+                for (let child of imported) {
+                    add(child, path);
+                }
+            }
+            else {
+                this.add(imported);
+            }
+        };
+        for (let file of files) {
+            if (![".js", ".ts"].includes(node_path_1.default.extname(file))) {
+                continue;
+            }
+            const filepath = node_path_1.default.resolve(directory, file);
+            try {
+                let imported = require(filepath);
+                if (typeof imported === "object" && imported.__esModule) {
+                    imported = imported.default;
+                }
+                add(imported, filepath);
+            }
+            catch (error) {
+                if (error instanceof Error) {
+                    errors[filepath] = error;
+                }
+            }
+        }
+        if (Object.keys(errors).length > 0) {
+            throw new Error(`Failed to load ${Object.keys(errors).length} files:\n${Object.keys(errors)
+                .map((file) => `\`${file}\`: ${errors[file].message}`)
+                .join("\n")}`);
         }
         return this;
     }

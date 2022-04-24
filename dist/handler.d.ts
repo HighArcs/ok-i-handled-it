@@ -25,15 +25,21 @@ export interface OkOptions {
     deleteResponse?: boolean;
     startup?: boolean;
 }
+export interface DirectoryOptions {
+    subdirectories?: boolean;
+    absolute?: boolean;
+}
 export declare class Ok {
     protected prefixes: Array<string>;
     commands: Array<Command>;
     replies: Map<string, Message>;
     options: Required<OkOptions>;
+    protected directories: Map<string, DirectoryOptions>;
     constructor(options: OkOptions);
     get(name: string): Command<any> | undefined;
     add<T>(options: Command<T>): this;
     addMultiple(...commands: Array<Command>): this;
+    addMultipleIn(directory: string, options: DirectoryOptions): Promise<this>;
     exec(context: Message): Promise<any>;
     attach(client: Client): void;
 }
