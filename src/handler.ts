@@ -75,6 +75,58 @@ export class Ok {
     }
     return this;
   }
+  async addMultipleIn(directory: string, options: DirectoryOptions) {
+    options = Object.assign({ subdirectories: true }, options);
+    if (!options.absolute) {
+      if (require.main) {
+        directory = path.join(path.dirname(require.main.filename), directory);
+      }
+    }
+    this.directories.set(directory, options);
+
+    const files = await getFiles(directory, options.subdirectories);
+    const errors: Record<string, Error> = {};
+
+    const add = (imported: any, path: string) => {
+      if (!imported) {
+        return;
+      }
+      if (Array.isArray(imported)) {
+        for (let child of imported) {
+          add(child, path);
+        }
+      } else {
+        this.add(imported);
+      }
+    };
+
+    for (let file of files) {
+      if (![".js", ".ts"].includes(path.extname(file))) {
+        continue;
+      }
+      const filepath = path.resolve(directory, file);
+      try {
+        let imported = require(filepath);
+        if (typeof imported === "object" && imported.__esModule) {
+          imported = imported.default;
+        }
+        add(imported, filepath);
+      } catch (error) {
+        errors[filepath] = error;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      throw new Error(
+        `Failed to load ${Object.keys(errors).length} files:\n${Object.keys(
+          errors
+        )
+          .map((file) => `\`${file}\`: ${errors[file].message}`)
+          .join("\n")}`
+      );
+    }
+    return this;
+  }
   async exec(context: Message) {
     if (this.options.events) {
       if (this.options.events.onMessageCheck) {
