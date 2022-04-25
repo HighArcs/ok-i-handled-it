@@ -56,7 +56,9 @@ export const Parameters = {
   [Builtin.FILE]: (value: string, context: Message) => {
     return context.attachments.first();
   },
-  [Builtin.OBJECT]: <T>(value: string, context: Message): T => {
-    return JSON.parse(value) as T;
+  [Builtin.OBJECT]: <T>() => {
+    return (value: string, context: Message): T => {
+      return JSON.parse(value);
+    };
   },
 };

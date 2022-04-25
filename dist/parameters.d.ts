@@ -27,5 +27,5 @@ export declare const Parameters: {
     bigint: (value: string, context: Message) => bigint;
     url: (value: string, context: Message) => URL;
     file: (value: string, context: Message) => import("discord.js").Attachment | undefined;
-    object: <T>(value: string, context: Message) => T;
+    object: <T>() => (value: string, context: Message) => T;
 };

@@ -58,7 +58,9 @@ exports.Parameters = {
     [Builtin.FILE]: (value, context) => {
         return context.attachments.first();
     },
-    [Builtin.OBJECT]: (value, context) => {
-        return JSON.parse(value);
+    [Builtin.OBJECT]: () => {
+        return (value, context) => {
+            return JSON.parse(value);
+        };
     },
 };
