@@ -14,6 +14,7 @@ export enum Builtin {
   BIGINT = "bigint",
   URL = "url",
   FILE = "file",
+  OBJECT = "object",
 }
 export const Parameters = {
   [Builtin.BOOLEAN]: (value: string, context: Message) => {
@@ -54,5 +55,8 @@ export const Parameters = {
   },
   [Builtin.FILE]: (value: string, context: Message) => {
     return context.attachments.first();
+  },
+  [Builtin.OBJECT]: <T>(value: string, context: Message): T => {
+    return JSON.parse(value) as T;
   },
 };

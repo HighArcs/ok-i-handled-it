@@ -16,6 +16,7 @@ var Builtin;
     Builtin["BIGINT"] = "bigint";
     Builtin["URL"] = "url";
     Builtin["FILE"] = "file";
+    Builtin["OBJECT"] = "object";
 })(Builtin = exports.Builtin || (exports.Builtin = {}));
 exports.Parameters = {
     [Builtin.BOOLEAN]: (value, context) => {
@@ -56,5 +57,8 @@ exports.Parameters = {
     },
     [Builtin.FILE]: (value, context) => {
         return context.attachments.first();
+    },
+    [Builtin.OBJECT]: (value, context) => {
+        return JSON.parse(value);
     },
 };

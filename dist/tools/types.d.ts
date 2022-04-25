@@ -1,21 +1,6 @@
-export declare type T = true;
-export declare type F = false;
-export declare type B = T | F;
-export declare type U = undefined;
-export declare type If<Condition, Then, Else> = Condition extends T ? Then : Else;
-export declare type Not<X> = X extends T ? F : T;
-export declare type And<X, Y> = X extends true ? Y extends true ? true : false : false;
-export declare type Or<X, Y> = X extends true ? true : Y extends true ? true : false;
-export declare type Xor<X, Y> = X extends true ? Y extends true ? false : true : Y extends true ? true : false;
 export declare type Awaitable<X> = X | Promise<X>;
-export declare type Nullable<X> = X | null;
-export declare type Optional<X> = X | undefined;
-export declare type Required<X> = X extends undefined ? never : X;
 export declare type Functional<X> = ((...args: any[]) => X) | X;
-export declare type Recordable<X> = Record<string | number | symbol, X> | X;
 export declare type Arrayable<X> = Array<X> | X;
-export declare type Intersection<X, Y> = X & Y;
-export declare type Union<X, Y> = X | Y;
 export declare type Resolvable<X> = Functional<Awaitable<X>>;
 export declare function resolve<T>(value: Resolvable<T>, ...args: any[]): Promise<T>;
 export declare type ParseType<T> = {

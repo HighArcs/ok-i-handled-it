@@ -11,7 +11,8 @@ export declare enum Builtin {
     DATE = "date",
     BIGINT = "bigint",
     URL = "url",
-    FILE = "file"
+    FILE = "file",
+    OBJECT = "object"
 }
 export declare const Parameters: {
     boolean: (value: string, context: Message) => boolean;
@@ -26,4 +27,5 @@ export declare const Parameters: {
     bigint: (value: string, context: Message) => bigint;
     url: (value: string, context: Message) => URL;
     file: (value: string, context: Message) => import("discord.js").Attachment | undefined;
+    object: <T>(value: string, context: Message) => T;
 };
