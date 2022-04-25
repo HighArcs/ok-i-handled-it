@@ -1,5 +1,4 @@
 import { Message } from "discord.js";
-import { ParameterType } from "./signature";
 import { Match } from "./tools/markup";
 
 export enum Builtin {
@@ -16,7 +15,7 @@ export enum Builtin {
   URL = "url",
   FILE = "file",
 }
-export const Parameters: Record<Builtin, ParameterType<any>> = {
+export const Parameters = {
   [Builtin.BOOLEAN]: (value: string, context: Message) => {
     return value.toLowerCase() === "true";
   },
